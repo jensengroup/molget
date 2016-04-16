@@ -1,5 +1,13 @@
-Molget: cshell script to get coordinates from chemical name using Babel and Cactus
+# Molget
+Molget is a cshell script to get 3D coordinates from chemical names using [OpenBabel](https://github.com/openbabel/openbabel) and Cactus
 
-usage: ./molget methane
+## Usage
+After you have cloned the repository you have to make molget executable by performing the following
 
-(remember to "chmod 755 molget)
+    chmod 755 molget
+
+You can now use `molget` like this
+
+    ./molget methane
+
+to generate 3D coordinates of methane.
