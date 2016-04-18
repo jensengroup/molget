@@ -12,5 +12,5 @@ url=$(echo "$url" | sed 's/ /%20/g')
 
 molecule_wo_spaces=$(echo "$molecule" | sed 's/ /_/g')
 
-curl "$url" -o "$molecule_wo_spaces.smi"
+curl -# "$url" -o "$molecule_wo_spaces.smi"
 babel -ismi "$molecule_wo_spaces.smi" -oxyz "$molecule_wo_spaces.xyz" --gen3D
