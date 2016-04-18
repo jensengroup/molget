@@ -3,6 +3,8 @@
 # usage: ./molget methane
 # (remember to "chmod 755 molget)
 #
+# Original work by Prof. Jensen (https://github.com/jensengroup/molget).
+#
 molecule="$1"
 url="https://cactus.nci.nih.gov/chemical/structure/$molecule/smiles"
 curl "$url" -o "$molecule.smi"
