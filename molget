@@ -1,16 +1,22 @@
 #!/bin/sh
-# Molget: bash script to get coordinates from chemical name using Babel and Cactus
-# usage: ./molget methane
-# (remember to "chmod 755 molget)
-#
 # Original work by Prof. Jensen (https://github.com/jensengroup/molget).
 #
 #? molget 0.1
+#?
+#? Molget: bash script to get coordinates from chemical name using Babel and Cactus.
 #?
 #? Usage: molget chemical_name [chemical_name...]
 #?
 #?   -h  show this message
 #?   -v  show version
+#?
+#? Examples:
+#?
+#?   ./molget methane
+#?   ./molget hexacyanoiron
+#?   ./molget water thf dmso dmf
+#?   ./molget "propylene carbonate"
+#?   (remember to "chmod 755 molget")
 
 while getopts ":hv" opt "$@"
   do

@@ -15,3 +15,7 @@ to generate 3D coordinates of methane.
 Multiple chemical names can be retrieved simultaneously as such:
 
     ./molget water thf dmso dmf
+
+There is also a help message that may be useful:
+
+    ./molget -h
