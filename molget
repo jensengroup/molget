@@ -5,6 +5,38 @@
 #
 # Original work by Prof. Jensen (https://github.com/jensengroup/molget).
 #
+#? molget 0.1
+#?
+#? Usage: molget chemical_name
+#?
+#?   -h  show this message
+#?   -v  show version
+
+while getopts ":hv" opt "$@"
+  do
+    case $opt in
+      h)  # help
+        grep "^#?" "$0" | cut -c 4-
+        exit 0
+        ;;
+      v)  # version
+        grep "^#? molget" "$0" | cut -c 4-
+        exit 0
+        ;;
+      \?)
+        echo "Invalid option: -$OPTARG" >&2
+        exit 1
+        ;;
+      :)
+        echo "Option -$OPTARG requires an argument." >&2
+        exit 1
+        ;;
+    esac
+  done
+
+# recover $@
+shift $((OPTIND-1))
+
 molecule="$1"
 
 url="https://cactus.nci.nih.gov/chemical/structure/$molecule/smiles"
