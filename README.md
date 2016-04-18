@@ -11,3 +11,7 @@ You can now use `molget` like this
     ./molget methane
 
 to generate 3D coordinates of methane.
+
+Multiple chemical names can be retrieved simultaneously as such:
+
+    ./molget water thf dmso dmf
