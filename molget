@@ -1,8 +1,8 @@
-#!/bin/csh
-# Molget: cshell script to get coordinates from chemical name using Babel and Cactus
+#!/bin/sh
+# Molget: bash script to get coordinates from chemical name using Babel and Cactus
 # usage: ./molget methane
 # (remember to "chmod 755 molget)
 #
-set molecule = $argv[1]
+molecule=$1
 curl https://cactus.nci.nih.gov/chemical/structure/$molecule/smiles -o $molecule.smi
 babel -ismi $molecule.smi -oxyz $molecule.xyz --gen3D
