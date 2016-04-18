@@ -3,6 +3,7 @@
 # usage: ./molget methane
 # (remember to "chmod 755 molget)
 #
-molecule=$1
-curl https://cactus.nci.nih.gov/chemical/structure/$molecule/smiles -o $molecule.smi
-babel -ismi $molecule.smi -oxyz $molecule.xyz --gen3D
+molecule="$1"
+url="https://cactus.nci.nih.gov/chemical/structure/$molecule/smiles"
+curl "$url" -o "$molecule.smi"
+babel -ismi "$molecule.smi" -oxyz "$molecule.xyz" --gen3D
