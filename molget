@@ -2,7 +2,7 @@
 # Original work by Prof. Jensen (https://github.com/jensengroup/molget).
 # Some parts written by Felipe Schneider.
 #
-#? molget 0.1
+#? molget 0.2
 #?
 #? Molget: bash script to get coordinates from chemical name using Babel and Cactus.
 #?
