@@ -1,5 +1,6 @@
 #!/bin/sh
 # Original work by Prof. Jensen (https://github.com/jensengroup/molget).
+# Some parts written by Felipe Schneider.
 #
 #? molget 0.1
 #?
@@ -21,11 +22,11 @@
 while getopts ":hv" opt "$@"
   do
     case $opt in
-      h)  # help
+      h)  # Help message.
         grep "^#?" "$0" | cut -c 4-
         exit 0
         ;;
-      v)  # version
+      v)  # Version message.
         grep "^#? molget" "$0" | cut -c 4-
         exit 0
         ;;
@@ -40,14 +41,16 @@ while getopts ":hv" opt "$@"
     esac
   done
 
-# recover $@
+# Recover $@ for posterior use.
 shift $((OPTIND-1))
 
 for molecule in "$@"
   do
     url="https://cactus.nci.nih.gov/chemical/structure/$molecule/smiles"
+    # Spaces in the URL should be escaped.
     url=$(echo "$url" | sed 's/ /%20/g')
 
+    # It is also wise to translate spaces in filenames to underscores.
     molecule_wo_spaces=$(echo "$molecule" | sed 's/ /_/g')
 
     curl -# "$url" -o "$molecule_wo_spaces.smi"
