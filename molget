@@ -1,8 +1,58 @@
-#!/bin/csh
-# Molget: cshell script to get coordinates from chemical name using Babel and Cactus
-# usage: ./molget methane
-# (remember to "chmod 755 molget)
+#!/bin/sh
+# Original work by Prof. Jensen (https://github.com/jensengroup/molget).
+# Some parts written by Felipe Schneider.
 #
-set molecule = $argv[1]
-curl https://cactus.nci.nih.gov/chemical/structure/$molecule/smiles -o $molecule.smi
-babel -ismi $molecule.smi -oxyz $molecule.xyz --gen3D
+#? molget 0.2
+#?
+#? Molget: bash script to get coordinates from chemical name using Babel and Cactus.
+#?
+#? Usage: molget chemical_name [chemical_name...]
+#?
+#?   -h  show this message
+#?   -v  show version
+#?
+#? Examples:
+#?
+#?   ./molget methane
+#?   ./molget hexacyanoiron
+#?   ./molget water thf dmso dmf
+#?   ./molget "propylene carbonate"
+#?   (remember to "chmod 755 molget")
+
+while getopts ":hv" opt "$@"
+  do
+    case $opt in
+      h)  # Help message.
+        grep "^#?" "$0" | cut -c 4-
+        exit 0
+        ;;
+      v)  # Version message.
+        grep "^#? molget" "$0" | cut -c 4-
+        exit 0
+        ;;
+      \?)
+        echo "Invalid option: -$OPTARG" >&2
+        exit 1
+        ;;
+      :)
+        echo "Option -$OPTARG requires an argument." >&2
+        exit 1
+        ;;
+    esac
+  done
+
+# Recover $@ for posterior use.
+shift $((OPTIND-1))
+
+for molecule in "$@"
+  do
+    url="https://cactus.nci.nih.gov/chemical/structure/$molecule/smiles"
+    # Spaces in the URL should be escaped.
+    url=$(echo "$url" | sed 's/ /%20/g')
+
+    # It is also wise to translate spaces in filenames to underscores.
+    molecule_wo_spaces=$(echo "$molecule" | sed 's/ /_/g')
+
+    curl -# "$url" -o "$molecule_wo_spaces.smi"
+    obabel -ismi "$molecule_wo_spaces.smi" -oxyz -O "$molecule_wo_spaces.xyz" --gen3D -c
+  done
