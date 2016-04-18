@@ -7,7 +7,7 @@
 #
 #? molget 0.1
 #?
-#? Usage: molget chemical_name
+#? Usage: molget chemical_name [chemical_name...]
 #?
 #?   -h  show this message
 #?   -v  show version
@@ -37,12 +37,13 @@ while getopts ":hv" opt "$@"
 # recover $@
 shift $((OPTIND-1))
 
-molecule="$1"
+for molecule in "$@"
+  do
+    url="https://cactus.nci.nih.gov/chemical/structure/$molecule/smiles"
+    url=$(echo "$url" | sed 's/ /%20/g')
 
-url="https://cactus.nci.nih.gov/chemical/structure/$molecule/smiles"
-url=$(echo "$url" | sed 's/ /%20/g')
+    molecule_wo_spaces=$(echo "$molecule" | sed 's/ /_/g')
 
-molecule_wo_spaces=$(echo "$molecule" | sed 's/ /_/g')
-
-curl -# "$url" -o "$molecule_wo_spaces.smi"
-obabel -ismi "$molecule_wo_spaces.smi" -oxyz -O "$molecule_wo_spaces.xyz" --gen3D -c
+    curl -# "$url" -o "$molecule_wo_spaces.smi"
+    obabel -ismi "$molecule_wo_spaces.smi" -oxyz -O "$molecule_wo_spaces.xyz" --gen3D -c
+  done
