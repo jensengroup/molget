@@ -1,6 +1,6 @@
 #!/bin/sh
 # Original work by Prof. Jensen (https://github.com/jensengroup/molget).
-# Some parts written by Felipe Schneider.
+# Rewritten by Felipe Schneider.
 #
 #? molget 0.2
 #?
