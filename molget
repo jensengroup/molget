@@ -46,6 +46,8 @@ shift $((OPTIND-1))
 
 for molecule in "$@"
   do
+    echo -n $molecule
+
     url="https://cactus.nci.nih.gov/chemical/structure/$molecule/smiles"
     # Spaces in the URL should be escaped.
     url=$(echo "$url" | sed 's/ /%20/g')
@@ -53,6 +55,15 @@ for molecule in "$@"
     # It is also wise to translate spaces in filenames to underscores.
     molecule_wo_spaces=$(echo "$molecule" | sed 's/ /_/g')
 
-    curl -# "$url" -o "$molecule_wo_spaces.smi"
-    obabel -ismi "$molecule_wo_spaces.smi" -oxyz -O "$molecule_wo_spaces.xyz" --gen3D -c
+    curl "$url" -o "$molecule_wo_spaces.smi" 2> /dev/null
+
+    # Check for 404 error
+    if grep -q 404 "$molecule_wo_spaces.smi"; then
+        echo " FAILED"
+        rm $molecule_wo_spaces.smi
+        continue
+    fi
+
+    obabel -ismi "$molecule_wo_spaces.smi" -oxyz -O "$molecule_wo_spaces.xyz" --gen3D -c 2> /dev/null
+    echo " SUCCESS"
   done
