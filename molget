@@ -64,6 +64,6 @@ for molecule in "$@"
         continue
     fi
 
-    obabel -ismi "$molecule_wo_spaces.sdf" -oxyz -O "$molecule_wo_spaces.xyz" -c 2> /dev/null
+    obabel -isdf "$molecule_wo_spaces.sdf" -oxyz -O "$molecule_wo_spaces.xyz" -c 2> /dev/null
     echo " SUCCESS"
   done
