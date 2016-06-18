@@ -19,6 +19,7 @@
 #?   ./molget water thf dmso dmf
 #?   ./molget "propylene carbonate"
 #?   ./molget -s "C(=O)N"
+#?   ./molget -s "C/C=C\C" "C/C=C/C"
 #?   (remember to "chmod 755 molget")
 
 use_smiles=false
@@ -70,6 +71,10 @@ for molecule in "$@"
 
     # It is also wise to translate spaces in filenames to underscores.
     molecule_wo_spaces=${molecule// /_}
+
+    # Slashes should be escaped in Linux, backslashes in Windows/Wine.
+    molecule_wo_spaces=${molecule_wo_spaces//\//slash}
+    molecule_wo_spaces=${molecule_wo_spaces//\\/backslash}
 
     # After, file names are generated.
     ob_inp_file="${molecule_wo_spaces}.${ob_inp_type}"
