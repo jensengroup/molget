@@ -16,6 +16,6 @@ Multiple chemical names can be retrieved simultaneously as such:
 
     ./molget water thf dmso dmf
 
-There is also a help message that may be useful:
+There is also a help message that will should you all the options:
 
     ./molget -h
