@@ -108,6 +108,9 @@ for molecule in "$@"
       fi
     fi
 
-    obabel -i "$ob_inp_type" "$ob_inp_file" -o "$ob_out_type" -O "$ob_out_file" $ob_ext_opts 2> /dev/null
+    # Avoid cases in which the output file type is the same as the input one.
+    if [ "$ob_inp_type" != "$ob_out_type" ]; then
+      obabel -i "$ob_inp_type" "$ob_inp_file" -o "$ob_out_type" -O "$ob_out_file" $ob_ext_opts 2> /dev/null
+    fi
     echo " SUCCESS"
   done
