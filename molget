@@ -10,6 +10,7 @@
 #?
 #?   -h  show this message
 #?   -v  show version
+#?   -s  assume chemical_name is a SMILES string
 #?
 #? Examples:
 #?
@@ -17,9 +18,13 @@
 #?   ./molget hexacyanoiron
 #?   ./molget water thf dmso dmf
 #?   ./molget "propylene carbonate"
+#?   ./molget -s "C(=O)N"
+#?   ./molget -s "C/C=C\C" "C/C=C/C"
 #?   (remember to "chmod 755 molget")
 
-while getopts ":hv" opt "$@"
+use_smiles=false
+
+while getopts ":hvs" opt "$@"
   do
     case $opt in
       h)  # Help message.
@@ -29,6 +34,9 @@ while getopts ":hv" opt "$@"
       v)  # Version message.
         grep "^#? molget" "$0" | cut -c 4-
         exit 0
+        ;;
+      s)  # Use SMILES.
+        use_smiles=true
         ;;
       \?)
         echo "Invalid option: -$OPTARG" >&2
@@ -54,26 +62,42 @@ for molecule in "$@"
     ob_out_type="xyz"
     ob_ext_opts="-c"
 
-    # A URL is then generated.
-    url="https://cactus.nci.nih.gov/chemical/structure/${molecule}/${cactus_repr}"
-    # Spaces in the URL should be escaped.
-    url=${url// /%20}
+    if [ "$use_smiles" = true ]; then
+      # We need to change the input type.
+      ob_inp_type="smi"
+      # We also need to tell OpenBabel to generate 3D coordinates from SMILES.
+      ob_ext_opts="${ob_ext_opts} --gen3d"
+    fi
 
     # It is also wise to translate spaces in filenames to underscores.
     molecule_wo_spaces=${molecule// /_}
+
+    # Slashes should be escaped in Linux, backslashes in Windows/Wine.
+    molecule_wo_spaces=${molecule_wo_spaces//\//slash}
+    molecule_wo_spaces=${molecule_wo_spaces//\\/backslash}
 
     # After, file names are generated.
     ob_inp_file="${molecule_wo_spaces}.${ob_inp_type}"
     ob_out_file="${molecule_wo_spaces}.${ob_out_type}"
 
-    # The data is downloaded and transformed.
-    curl -# "$url" -o "$ob_inp_file" 2> /dev/null
+    # Now we need to generate the input file for OpenBabel.
+    if [ "$use_smiles" = true ]; then
+      echo "$molecule" > "$ob_inp_file"
+    else
+      # A URL is then generated.
+      url="https://cactus.nci.nih.gov/chemical/structure/${molecule}/${cactus_repr}"
+      # Spaces in the URL should be escaped.
+      url=${url// /%20}
 
-    # Check for 404 error
-    if grep -q "Page not found" "${ob_inp_file}"; then
-        echo " FAILED"
-        rm "${ob_inp_file}"
-        continue
+      # The data is downloaded and transformed.
+      curl -# "$url" -o "$ob_inp_file" 2> /dev/null
+
+      # Check for 404 error
+      if grep -q "Page not found" "${ob_inp_file}"; then
+          echo " FAILED"
+          rm "${ob_inp_file}"
+          continue
+      fi
     fi
 
     obabel -i "$ob_inp_type" "$ob_inp_file" -o "$ob_out_type" -O "$ob_out_file" $ob_ext_opts 2> /dev/null
