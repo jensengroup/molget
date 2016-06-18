@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Original work by Jan Jensen (https://github.com/jensengroup/molget).
 # Rewritten by Felipe Schneider.
 #
@@ -46,7 +46,7 @@ shift $((OPTIND-1))
 
 for molecule in "$@"
   do
-    echo -n $molecule
+    echo -n "$molecule"
 
     # Some preferences are preset, such as file types and options.
     cactus_repr="sdf"
@@ -57,10 +57,10 @@ for molecule in "$@"
     # A URL is then generated.
     url="https://cactus.nci.nih.gov/chemical/structure/${molecule}/${cactus_repr}"
     # Spaces in the URL should be escaped.
-    url=$(echo "$url" | sed 's/ /%20/g')
+    url=${url// /%20}
 
     # It is also wise to translate spaces in filenames to underscores.
-    molecule_wo_spaces=$(echo "$molecule" | sed 's/ /_/g')
+    molecule_wo_spaces=${molecule// /_}
 
     # After, file names are generated.
     ob_inp_file="${molecule_wo_spaces}.${ob_inp_type}"
