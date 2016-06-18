@@ -8,9 +8,11 @@
 #?
 #? Usage: molget chemical_name [chemical_name...]
 #?
-#?   -h  show this message
-#?   -v  show version
-#?   -s  assume chemical_name is a SMILES string
+#?   -h         show this message
+#?   -v         show version
+#?   -s         assume chemical_name is a SMILES string
+#?   -o [TYPE]  selects an output file type supported by OpenBabel (defaults to
+#?              xyz)
 #?
 #? Examples:
 #?
@@ -20,11 +22,15 @@
 #?   ./molget "propylene carbonate"
 #?   ./molget -s "C(=O)N"
 #?   ./molget -s "C/C=C\C" "C/C=C/C"
+#?   ./molget -o gamin p-nitrobenzene
+#?   ./molget -o pdb nadh nad+
+#?   ./molget -o gamin -s "C#C"
 #?   (remember to "chmod 755 molget")
 
 use_smiles=false
+ob_out_type="xyz"
 
-while getopts ":hvs" opt "$@"
+while getopts ":hvso:" opt "$@"
   do
     case $opt in
       h)  # Help message.
@@ -37,6 +43,9 @@ while getopts ":hvs" opt "$@"
         ;;
       s)  # Use SMILES.
         use_smiles=true
+        ;;
+      o)  # Set output type.
+        ob_out_type=$OPTARG
         ;;
       \?)
         echo "Invalid option: -$OPTARG" >&2
@@ -59,7 +68,6 @@ for molecule in "$@"
     # Some preferences are preset, such as file types and options.
     cactus_repr="sdf"
     ob_inp_type="sdf"
-    ob_out_type="xyz"
     ob_ext_opts="-c"
 
     if [ "$use_smiles" = true ]; then
@@ -100,6 +108,9 @@ for molecule in "$@"
       fi
     fi
 
-    obabel -i "$ob_inp_type" "$ob_inp_file" -o "$ob_out_type" -O "$ob_out_file" $ob_ext_opts 2> /dev/null
+    # Avoid cases in which the output file type is the same as the input one.
+    if [ "$ob_inp_type" != "$ob_out_type" ]; then
+      obabel -i "$ob_inp_type" "$ob_inp_file" -o "$ob_out_type" -O "$ob_out_file" $ob_ext_opts 2> /dev/null
+    fi
     echo " SUCCESS"
   done
