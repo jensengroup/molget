@@ -70,9 +70,9 @@ for molecule in "$@"
     curl -# "$url" -o "$ob_inp_file" 2> /dev/null
 
     # Check for 404 error
-    if grep -q "Page not found" "$molecule_wo_spaces.sdf"; then
+    if grep -q "Page not found" "${ob_inp_file}"; then
         echo " FAILED"
-        rm $molecule_wo_spaces.sdf
+        rm "${ob_inp_file}"
         continue
     fi
 
