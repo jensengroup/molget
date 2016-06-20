@@ -1,15 +1,18 @@
-#!/bin/sh
+#!/bin/bash
 # Original work by Jan Jensen (https://github.com/jensengroup/molget).
 # Rewritten by Felipe Schneider.
 #
-#? molget 0.2
+#? molget 0.3
 #?
 #? Molget: bash script to get coordinates from chemical name using Cactus.
 #?
 #? Usage: molget chemical_name [chemical_name...]
 #?
-#?   -h  show this message
-#?   -v  show version
+#?   -h         show this message
+#?   -v         show version
+#?   -s         assume chemical_name is a SMILES string
+#?   -o [TYPE]  selects an output file type supported by OpenBabel (defaults to
+#?              xyz)
 #?
 #? Examples:
 #?
@@ -17,9 +20,17 @@
 #?   ./molget hexacyanoiron
 #?   ./molget water thf dmso dmf
 #?   ./molget "propylene carbonate"
+#?   ./molget -s "C(=O)N"
+#?   ./molget -s "C/C=C\C" "C/C=C/C"
+#?   ./molget -o gamin p-nitrobenzene
+#?   ./molget -o pdb nadh nad+
+#?   ./molget -o gamin -s "C#C"
 #?   (remember to "chmod 755 molget")
 
-while getopts ":hv" opt "$@"
+use_smiles=false
+ob_out_type="xyz"
+
+while getopts ":hvso:" opt "$@"
   do
     case $opt in
       h)  # Help message.
@@ -29,6 +40,12 @@ while getopts ":hv" opt "$@"
       v)  # Version message.
         grep "^#? molget" "$0" | cut -c 4-
         exit 0
+        ;;
+      s)  # Use SMILES.
+        use_smiles=true
+        ;;
+      o)  # Set output type.
+        ob_out_type=$OPTARG
         ;;
       \?)
         echo "Invalid option: -$OPTARG" >&2
@@ -46,24 +63,54 @@ shift $((OPTIND-1))
 
 for molecule in "$@"
   do
-    echo -n $molecule
+    echo -n "$molecule"
 
-    url="https://cactus.nci.nih.gov/chemical/structure/$molecule/sdf"
-    # Spaces in the URL should be escaped.
-    url=$(echo "$url" | sed 's/ /%20/g')
+    # Some preferences are preset, such as file types and options.
+    cactus_repr="sdf"
+    ob_inp_type="sdf"
+    ob_ext_opts="-c"
 
-    # It is also wise to translate spaces in filenames to underscores.
-    molecule_wo_spaces=$(echo "$molecule" | sed 's/ /_/g')
-
-    curl "$url" -o "$molecule_wo_spaces.sdf" 2> /dev/null
-
-    # Check for 404 error
-    if grep -q "Page not found" "$molecule_wo_spaces.sdf"; then
-        echo " FAILED"
-        rm $molecule_wo_spaces.sdf
-        continue
+    if [ "$use_smiles" = true ]; then
+      # We need to change the input type.
+      ob_inp_type="smi"
+      # We also need to tell OpenBabel to generate 3D coordinates from SMILES.
+      ob_ext_opts="${ob_ext_opts} --gen3d"
     fi
 
-    obabel -isdf "$molecule_wo_spaces.sdf" -oxyz -O "$molecule_wo_spaces.xyz" -c 2> /dev/null
+    # It is also wise to translate spaces in filenames to underscores.
+    molecule_wo_spaces=${molecule// /_}
+
+    # Slashes should be escaped in Linux, backslashes in Windows/Wine.
+    molecule_wo_spaces=${molecule_wo_spaces//\//slash}
+    molecule_wo_spaces=${molecule_wo_spaces//\\/backslash}
+
+    # After, file names are generated.
+    ob_inp_file="${molecule_wo_spaces}.${ob_inp_type}"
+    ob_out_file="${molecule_wo_spaces}.${ob_out_type}"
+
+    # Now we need to generate the input file for OpenBabel.
+    if [ "$use_smiles" = true ]; then
+      echo "$molecule" > "$ob_inp_file"
+    else
+      # A URL is then generated.
+      url="https://cactus.nci.nih.gov/chemical/structure/${molecule}/${cactus_repr}"
+      # Spaces in the URL should be escaped.
+      url=${url// /%20}
+
+      # The data is downloaded and transformed.
+      curl -# "$url" -o "$ob_inp_file" 2> /dev/null
+
+      # Check for 404 error
+      if grep -q "Page not found" "${ob_inp_file}"; then
+          echo " FAILED"
+          rm "${ob_inp_file}"
+          continue
+      fi
+    fi
+
+    # Avoid cases in which the output file type is the same as the input one.
+    if [ "$ob_inp_type" != "$ob_out_type" ]; then
+      obabel -i "$ob_inp_type" "$ob_inp_file" -o "$ob_out_type" -O "$ob_out_file" $ob_ext_opts 2> /dev/null
+    fi
     echo " SUCCESS"
   done
