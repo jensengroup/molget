@@ -4,7 +4,7 @@ Molget is a bash script to get 3D coordinates from chemical names using [OpenBab
 ## Usage
 After you have cloned the repository you have to make molget executable by performing the following
 
-    chmod 755 molget
+    chmod +x molget
 
 You can now use `molget` like this
 

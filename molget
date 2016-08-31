@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # Original work by Jan Jensen (https://github.com/jensengroup/molget).
 # Rewritten by Felipe Schneider.
 #
@@ -30,39 +30,40 @@
 use_smiles=false
 ob_out_type="xyz"
 
+
 while getopts ":hvso:" opt "$@"
-  do
+do
     case $opt in
-      h)  # Help message.
-        grep "^#?" "$0" | cut -c 4-
-        exit 0
-        ;;
-      v)  # Version message.
-        grep "^#? molget" "$0" | cut -c 4-
-        exit 0
-        ;;
-      s)  # Use SMILES.
-        use_smiles=true
-        ;;
-      o)  # Set output type.
-        ob_out_type=$OPTARG
-        ;;
-      \?)
-        echo "Invalid option: -$OPTARG" >&2
-        exit 1
-        ;;
-      :)
+        h)  # Help message.
+            grep "^#?" "$0" | cut -c 4-
+            exit 0
+            ;;
+        v)  # Version message.
+            grep "^#? molget" "$0" | cut -c 4-
+            exit 0
+            ;;
+        s)  # Use SMILES.
+            use_smiles=true
+            ;;
+        o)  # Set output type.
+            ob_out_type=$OPTARG
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+        :)
         echo "Option -$OPTARG requires an argument." >&2
         exit 1
         ;;
     esac
-  done
+done
 
 # Recover $@ for posterior use.
 shift $((OPTIND-1))
 
 for molecule in "$@"
-  do
+do
     echo -n "$molecule"
 
     # Some preferences are preset, such as file types and options.
@@ -71,10 +72,10 @@ for molecule in "$@"
     ob_ext_opts="-c"
 
     if [ "$use_smiles" = true ]; then
-      # We need to change the input type.
-      ob_inp_type="smi"
-      # We also need to tell OpenBabel to generate 3D coordinates from SMILES.
-      ob_ext_opts="${ob_ext_opts} --gen3d"
+        # We need to change the input type.
+        ob_inp_type="smi"
+        # We also need to tell OpenBabel to generate 3D coordinates from SMILES.
+        ob_ext_opts="${ob_ext_opts} --gen3d"
     fi
 
     # It is also wise to translate spaces in filenames to underscores.
@@ -90,27 +91,55 @@ for molecule in "$@"
 
     # Now we need to generate the input file for OpenBabel.
     if [ "$use_smiles" = true ]; then
-      echo "$molecule" > "$ob_inp_file"
+        echo "$molecule" > "$ob_inp_file"
     else
-      # A URL is then generated.
-      url="https://cactus.nci.nih.gov/chemical/structure/${molecule}/${cactus_repr}"
-      # Spaces in the URL should be escaped.
-      url=${url// /%20}
+        # A URL is then generated.
+        url="https://cactus.nci.nih.gov/chemical/structure/${molecule}/${cactus_repr}"
+        # Spaces in the URL should be escaped.
+        url=${url// /%20}
 
-      # The data is downloaded and transformed.
-      curl -# "$url" -o "$ob_inp_file" 2> /dev/null
+        # The data is downloaded and transformed.
+        # stderr is stored in case the exit status is not 0
+        error=$( curl -# "$url" -o "$ob_inp_file" >/dev/null 2>&1  )
+        check=$?
+        # Check for errors. These are critical so exit program
+        if [ ! $check = "0" ]
+        then
+            echo " FAILED"
+            echo "Exit status $check of command 'curl -# $url -o $ob_inp_file':" >&2
+            echo $error >&2
+            rm "${ob_inp_file}"
+            exit 1
+        fi
 
-      # Check for 404 error
-      if grep -q "Page not found" "${ob_inp_file}"; then
-          echo " FAILED"
-          rm "${ob_inp_file}"
-          continue
-      fi
+        # Check for 404 error
+        if grep -q "Page not found" "${ob_inp_file}"
+        then
+            echo " FAILED"
+            rm "${ob_inp_file}"
+            continue
+        fi
     fi
 
     # Avoid cases in which the output file type is the same as the input one.
-    if [ "$ob_inp_type" != "$ob_out_type" ]; then
-      obabel -i "$ob_inp_type" "$ob_inp_file" -o "$ob_out_type" -O "$ob_out_file" $ob_ext_opts 2> /dev/null
+    if [ "$ob_inp_type" != "$ob_out_type" ]
+    then
+        error=$( obabel -i "$ob_inp_type" "$ob_inp_file" -o "$ob_out_type" -O "$ob_out_file" $ob_ext_opts >/dev/null 2>&1 )
+        # Check for errors. These are critical so exit program
+        check=$?
+        if [ ! $check = "0" ]
+        then
+            echo " FAILED"
+            echo ${ob_inp_file}
+            echo "Exit status $check of command 'obabel -i "$ob_inp_type" "$ob_inp_file" -o "$ob_out_type" -O "$ob_out_file" $ob_ext_opts':" >&2
+            echo $error >&2
+            rm "${ob_inp_file}"
+            exit 1
+        fi
     fi
     echo " SUCCESS"
-  done
+
+    # clean sdf input file
+    rm "${ob_inp_file}"
+
+done
