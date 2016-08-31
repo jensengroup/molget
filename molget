@@ -136,10 +136,10 @@ do
             rm "${ob_inp_file}"
             exit 1
         fi
+        # clean sdf input file
+        rm "${ob_inp_file}"
     fi
     echo " SUCCESS"
 
-    # clean sdf input file
-    rm "${ob_inp_file}"
 
 done
